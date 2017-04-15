@@ -90,12 +90,12 @@ int SSBufferDec::readBuffer() {
   int tmpIndex = 0 ;
   while ( m_decBuf.bufSize> BLOCK_SIZE && !rtn ) {
 
-    memset(&tmpBlock,0,sizeof(tmpBlock) ) ;
-    tmpIndex = searchBlock(ID_RFANSBLOCKV2_SYNC,
-                           m_decBuf.buffer+m_decBuf.rdTail, m_decBuf.bufSize,
-                           0, tmpBlock ) ;
+      memset(&tmpBlock,0,sizeof(tmpBlock) ) ;
+      tmpIndex = searchBlock(ID_RFANSBLOCKV2_SYNC,
+                             m_decBuf.buffer+m_decBuf.rdTail, m_decBuf.bufSize,
+                             0, tmpBlock ) ;
 
-    if(tmpBlock.dataID == ID_RFANSBLOCKV2_SYNC ) {
+      if(tmpBlock.dataID == ID_RFANSBLOCKV2_SYNC ) {
 
       m_decBuf.rdTail = tmpIndex + m_decBuf.rdTail;
       m_decBuf.bufSize = m_decBuf.wrHead-m_decBuf.rdTail;
@@ -238,6 +238,8 @@ int SSBufferDec::ConvertXyz(std::vector<SCDRFANS_BLOCK_S> &inBlocks, std::vector
   for(int i=0;i <inBlocks.size();i++) {
 
     for(int j=0;j <RFANS_LASER_COUNT;j++) {
+
+
       tmpXyzIndex = i*RFANS_LASER_COUNT+j;
       tmpRange = inBlocks[i].laserData[j].rangeOne*UINTCONVERT;
       ot = inBlocks[i].laserData[j].angle *UINTCONVERT*M_PI / 180.0;
@@ -246,6 +248,7 @@ int SSBufferDec::ConvertXyz(std::vector<SCDRFANS_BLOCK_S> &inBlocks, std::vector
       tmpXyz.x = tmpRange*cos(tmptheta) *cos(-ot );
       tmpXyz.y = tmpRange*cos(tmptheta) *sin(-ot );
       tmpXyz.z = tmpRange*sin(tmptheta) ;
+      tmpXyz.time = inBlocks[i].t0stampH + t0stampL*0.0000001*31.25*j;
 
       outXyzBlocks[tmpXyzIndex] = tmpXyz ;
     }
