@@ -1,0 +1,13 @@
+<!-- -*- mode: XML -*- -->
+<!-- start velodyne_driver/DriverNodelet in a nodelet manager -->
+
+<launch>
+  <!-- arg name="simu_file_name" 		default="test.imp" / -->
+  <node pkg="rfans_driver" type="rfans_publisher" name="rfans_device" respawn="true" >
+		<param name="device_ip" 				value="192.168.0.3" />
+  	<param name="device_port" 			value="2014" />
+  	<param name="pc_port" 					value="3014" />
+  	<param name="motor_speed_hz" 		value="5" 	 />
+    
+	</node>  
+</launch>
