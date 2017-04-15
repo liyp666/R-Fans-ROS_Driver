@@ -108,6 +108,7 @@ typedef struct {                                        //138 byte
 }SCDRFANS_BLOCK_S;
 
 typedef struct {
+  double time ;
   float x,y,z ;
 }RFANS_XYZ_S;
 
