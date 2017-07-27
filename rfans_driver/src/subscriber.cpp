@@ -16,14 +16,19 @@ static rfans_driver::SSFileAPI s_fileAPI ;
 
 static std::vector<SCDRFANS_BLOCK_S> outBlocks ;
 static std::vector<RFANS_XYZ_S> outXyzBlocks ;
-static int saveFile = 1 ;
+static int saveFile = 0 ;
 
-static void RFansMessageReceived(rfans_driver::RfansPacket pkt) {
+static void RFansPacketReceived(rfans_driver::RfansPacket pkt) {
 
-    SSBufferDec::Depacket(pkt, outBlocks) ;
-    SSBufferDec::ConvertXyz(outBlocks, outXyzBlocks) ;
-    if(saveFile)
-      s_fileAPI.outputFile(outBlocks,outXyzBlocks) ;
+  SSBufferDec::Depacket(pkt, outBlocks) ;
+  SSBufferDec::ConvertXyz(outBlocks, outXyzBlocks) ;
+  if(saveFile)
+    s_fileAPI.outputFile(outBlocks,outXyzBlocks) ;
+}
+
+static void RFansPointCloudReceived(sensor_msgs::PointCloud2 pointCloud) {
+  if(saveFile)
+    s_fileAPI.outputFile(pointCloud) ;
 }
 
 int main ( int argc , char ** argv ) 
@@ -33,6 +38,7 @@ int main ( int argc , char ** argv )
              << "     Parameter:\n"
              << "       cmd,   0: stop RFans; 1:start RFans\n"
              << "     speed,   5: 5hz; 10: 10hz; 20: 20hz\n";
+
     return 0;
   }
 
@@ -40,8 +46,11 @@ int main ( int argc , char ** argv )
   ros::init ( argc , argv , "rfans_subscribe") ;
   ros::NodeHandle nh ;
 
-  ros::Subscriber sub = nh.subscribe ("rfans_driver/rfans_packets" ,
-                                      1024, &RFansMessageReceived ) ;
+//  ros::Subscriber packetSub = nh.subscribe ("rfans_driver/rfans_packets" ,
+//  1024, &RFansPacketReceived ) ;
+
+//  ros::Subscriber pointSub = nh.subscribe ("rfans_driver/rfans_points" ,
+//                                           1024, &RFansPointCloudReceived ) ;
 
   // Let ROS take over .
   ros::ServiceClient client = nh.serviceClient<rfans_driver::RfansCommand>("rfans_driver/rfans_control");
