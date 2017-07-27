@@ -108,8 +108,10 @@ typedef struct {                                        //138 byte
 }SCDRFANS_BLOCK_S;
 
 typedef struct {
-  double time ;
   float x,y,z ;
+  unsigned char intent;
+  unsigned char laserid;
+  //float angle, range ;
 }RFANS_XYZ_S;
 
 #pragma pack()
@@ -129,10 +131,6 @@ void readDEBFrameBuffer(FRAMS_BUFFER_S *mtFrameMsgBuf, DEB_FRAME_S *mtRegMap);
 
 int searchBlock(unsigned char key,unsigned char *data, int size,int flag,
                 SCDRFANS_BLOCK_S &outBlock) ;
-
-int ssDepacket(rfans_driver::RfansPacket &inPack, std::vector<SCDRFANS_BLOCK_S> &outBlocks) ;
-
-int ssConvertXyz(std::vector<SCDRFANS_BLOCK_S> &inBlocks, std::vector<RFANS_XYZ_S> &outXyzBlocks) ;
 
 #ifdef __cplusplus
 }

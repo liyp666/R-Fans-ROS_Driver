@@ -141,13 +141,12 @@ int searchBlock(unsigned char mkey,unsigned char *data, int size,int flag,
           tmpReadIndex += tmpOffset ;
           tmpSize--;
         } else {
-         // ROS_INFO_STREAM( "searchBlock");
-          return tmpReadIndex;
+          return tmpReadIndex; // ROS_INFO_STREAM( "searchBlock");
         }
       }
 
     } else {
-      tmpReadIndex += tmpOffset;
+      tmpReadIndex += tmpOffset ;
       tmpSize--;
     }
   }
