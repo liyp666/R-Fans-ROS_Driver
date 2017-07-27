@@ -14,7 +14,7 @@ namespace rfans_driver
 class Rfans_Driver
 {
 public:
-  Rfans_Driver(ros::NodeHandle mtNode);
+  Rfans_Driver(ros::NodeHandle mtNode, int type=0);
   ~Rfans_Driver();
 
   int spinOnce();

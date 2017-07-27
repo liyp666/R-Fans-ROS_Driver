@@ -23,6 +23,8 @@ static const int RFANS_PACKET_NUM = 1024 ;
 
 static Rfans_Driver *s_this = NULL;
 
+static char s_simuFileName[] = "test.imp";
+
 /** @brief Rfans Command Handle */
 bool CommandHandle(rfans_driver::RfansCommand::Request  &req,
                    rfans_driver::RfansCommand::Response &res)
@@ -42,11 +44,18 @@ bool CommandHandle(rfans_driver::RfansCommand::Request  &req,
   return true;
 }
 
-Rfans_Driver::Rfans_Driver(ros::NodeHandle mtNode)
+Rfans_Driver::Rfans_Driver(ros::NodeHandle mtNode, int type)
 {
   m_svr = mtNode.advertiseService("rfans_driver/rfans_control", CommandHandle);
   m_output = mtNode.advertise<rfans_driver::RfansPacket>("rfans_driver/rfans_packets", RFANS_PACKET_NUM);
-  m_devapi = new rfans_driver::IOSocketAPI();
+
+  if(type) {
+    m_devapi = new rfans_driver::SSFileAPI(s_simuFileName);
+  } else {
+    m_devapi = new rfans_driver::IOSocketAPI();
+  }
+
+
   s_this = this ;
 }
 
@@ -58,12 +67,17 @@ Rfans_Driver::~Rfans_Driver()
 /** @brief Rfnas Driver Core */
 int Rfans_Driver::spinOnce()
 {
-  memset(&tmpPacket,0,sizeof(tmpPacket) );
+  int rtn = 0 ;
 
-  int rtn = m_devapi->getPacket(tmpPacket);
-  if(rtn > 0) {
-    m_output.publish(tmpPacket) ;
-  }
+  m_devapi->revPacket();
+
+  do{
+    rtn = m_devapi->getPacket(tmpPacket);
+    if(rtn > 0) {
+      m_output.publish(tmpPacket) ;
+    }
+  }while (rtn);
+
   return rtn ;
 }
 
