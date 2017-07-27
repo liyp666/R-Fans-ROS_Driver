@@ -7,7 +7,7 @@ project(rfans_driver)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs roscpp)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs roscpp sensor_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -48,6 +48,7 @@ find_package(catkin REQUIRED COMPONENTS message_generation std_msgs roscpp)
 #   Message1.msg
 #   Message2.msg
 # )
+
 add_message_files(
   DIRECTORY msg
   FILES
@@ -81,11 +82,11 @@ add_service_files(
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
-generate_messages(DEPENDENCIES std_msgs)
+generate_messages(DEPENDENCIES)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
-################################################
+#####################################vector###########
 
 ## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
@@ -162,14 +163,16 @@ add_executable(rfans_publisher
   src/rfans_driver.cpp
   src/ssFrameLib.cpp
   src/bufferDecode.cpp )
+add_dependencies(rfans_publisher rfans_driver_generate_messages_cpp)
 target_link_libraries(rfans_publisher ${catkin_LIBRARIES})
 
-add_executable(rfans_subscriber
-  src/subscriber.cpp
-  src/ioapi.cpp
-  src/ssFrameLib.cpp
-  src/bufferDecode.cpp )
+add_executable(rfans_subscriber src/subscriber.cpp src/ioapi.cpp src/ssFrameLib.cpp src/bufferDecode.cpp)
+add_dependencies(rfans_subscriber rfans_driver_generate_messages_cpp)
 target_link_libraries(rfans_subscriber ${catkin_LIBRARIES})
+
+add_executable(cloud_node src/cloud_node.cpp src/ssFrameLib.cpp src/bufferDecode.cpp)
+add_dependencies(cloud_node rfans_driver_generate_messages_cpp)
+target_link_libraries(cloud_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
