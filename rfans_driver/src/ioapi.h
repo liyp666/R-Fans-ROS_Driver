@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <netinet/in.h>
 #include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
 #include "ssFrameLib.h"
 
 class SSBufferDec;
@@ -42,6 +43,7 @@ public:
 
   virtual int HW_WRREG(int flag, int regAddress, unsigned int regData) ;
 
+  virtual int revPacket() ;
   virtual int getPacket(rfans_driver::RfansPacket &pkt) ;
 protected:
   SSBufferDec *m_bufferPro ;
@@ -87,7 +89,7 @@ class SSFileAPI: public IOAPI{
 
 
 public:
-  SSFileAPI();
+  SSFileAPI(char *fileName=0);
   ~SSFileAPI();
 
   int create_file(int flag=0);
@@ -100,9 +102,10 @@ public:
   virtual int reset();
 
   int printf(char *msgStr, int size) ;
-  int outputFile(std::vector<SCDRFANS_BLOCK_S> &outBlocks, std::vector<RFANS_XYZ_S> &outXyzBlocks, int flag=1);
+
+  int outputFile(std::vector<SCDRFANS_BLOCK_S> &pointCloud, std::vector<RFANS_XYZ_S> &outXyzBlocks, int flag=1);
+  int outputFile(sensor_msgs::PointCloud2 &initCloud, int flag=1);
 private:
-  size_t  s_fileSize ;
   FILE *s_rawFile ;
   SCDRFANS_BLOCK_S *m_blocks;
 };

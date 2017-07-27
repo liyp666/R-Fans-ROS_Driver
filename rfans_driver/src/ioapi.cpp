@@ -49,15 +49,26 @@ int IOAPI::HW_WRREG(int flag, int regAddress, unsigned int regData) {
   return rtn;
 }
 
+int IOAPI::revPacket()
+{
+  int rtn = 0 ;
+
+  int readCount = 2;
+
+  if(m_bufferPro->freeSize()<= upd_packet_size) return rtn ;
+
+  while( readCount-- > 0 &&  m_bufferPro->freeSize() > upd_packet_size ) {
+    rtn = read(m_bufferPro->getWriteIndex(), upd_packet_size) ;
+    if(rtn == upd_packet_size) {
+      m_bufferPro->moveWriteIndex(upd_packet_size) ;
+    }
+  }
+  return rtn ;
+}
+
 /** @brief Get packet. */
 int IOAPI::getPacket(rfans_driver::RfansPacket &pkt) {
   int rtn = 0;
-  unsigned char udpPacket[upd_packet_size] = {0};
-  rtn = read(udpPacket,upd_packet_size) ;
-
-  if(rtn == upd_packet_size) {
-    m_bufferPro->writeBuffer(udpPacket,rtn) ;
-  }
   rtn = m_bufferPro->readPacket(pkt) ;
   return rtn;
 }
@@ -119,7 +130,7 @@ IOSocketAPI::~IOSocketAPI(void)
 int IOSocketAPI::write(unsigned char *data, int size)
 {
   int rtn = 0 ;
-  unsigned char tmpCmd[UDP_FRAME_MIN] = {0} ;
+  unsigned char tmpCmd[UDP_FRAME_MIN] ;
   unsigned char *tmpBuf = data ;
   socklen_t sender_address_len = sizeof(m_devaddr);
   if(m_sockfd <= 0) return rtn ;
@@ -164,11 +175,17 @@ int IOSocketAPI::read(unsigned char *data, int size)
   }
   return nbytes ;
 }
-
-SSFileAPI::SSFileAPI() {
+////////////////////////////////////////////////////////////////////////
+// SSFileAPI class implementation
+////////////////////////////////////////////////////////////////////////
+SSFileAPI::SSFileAPI(char *fileName) {
   s_rawFile = NULL;
+    reset();
+
+  if(fileName) {
+    s_rawFile = fopen(fileName,"rb+") ;
+  }
   m_blocks = (SCDRFANS_BLOCK_S *)malloc(packet_count*sizeof(SCDRFANS_BLOCK_S) );
-  reset();
 }
 
 SSFileAPI::~SSFileAPI() {
@@ -201,7 +218,6 @@ int SSFileAPI::create_file(int flag)
       fprintf(s_rawFile,"x y z intent laserID timeFlag\n");
   }
 
-  s_fileSize = 0;
   return 0;
 }
 
@@ -259,6 +275,22 @@ int SSFileAPI::outputFile(std::vector<SCDRFANS_BLOCK_S> &outBlocks, std::vector<
   return rtn ;
 }
 
+int SSFileAPI::outputFile(sensor_msgs::PointCloud2 &pointCloud, int flag)
+{
+  int rtn =0;
+
+  if(!s_rawFile) {
+    create_file(1);
+  }
+
+  RFANS_XYZ_S *tmpXyzs = (RFANS_XYZ_S *)(&pointCloud.data[0]) ;
+  if (s_rawFile) {
+    write( (unsigned char *)tmpXyzs, pointCloud.data.size() ) ;
+  }
+
+  return rtn ;
+}
+
 int SSFileAPI::write(unsigned char *data, int size)  {
   int rtn = 0 ;
   if(!s_rawFile) {
@@ -267,8 +299,7 @@ int SSFileAPI::write(unsigned char *data, int size)  {
 
   if (s_rawFile) {
     rtn = fwrite(data, 1, size, s_rawFile);
-    s_fileSize += rtn;
-    if (s_fileSize >= DATA_FILE_SIZE) {
+    if ( ftell(s_rawFile) >= DATA_FILE_SIZE) {
       create_file(1);
     }
   }
@@ -276,13 +307,24 @@ int SSFileAPI::write(unsigned char *data, int size)  {
 }
 
 int SSFileAPI::read(unsigned char *data, int size) {
-  return 0;
+  int rtn = 0 ;
+  if(!s_rawFile) return rtn ;
+
+  if( !feof(s_rawFile) ) {
+    rtn = fread(data,1,size,s_rawFile);
+  } else {
+    fseek(s_rawFile, 0 ,SEEK_SET );
+  }
+  //usleep(12000) ;
+  usleep(1000) ;
+  return rtn;
 }
 
 int SSFileAPI::reset() {
-  s_fileSize = 0 ;
-  if(s_rawFile)
+  if(s_rawFile) {
     fclose(s_rawFile);
+    s_rawFile = 0 ;
+  }
   return 0;
 }
 
@@ -292,15 +334,14 @@ int SSFileAPI::printf(char *msgStr, int size)
   if(!s_rawFile) {
     create_file();
   }
-  char tmpMsg[FILENAME_MAX] = {0};
+  char tmpMsg[FILENAME_MAX] ;
 
   if(size >FILENAME_MAX || size <=0) return 0 ;
   memcpy(tmpMsg, msgStr, size);
 
   if (s_rawFile) {
-    rtn = fprintf(s_rawFile,"%s\n",tmpMsg);
-    s_fileSize += rtn;
-    if (s_fileSize >= DATA_FILE_SIZE) {
+    fprintf(s_rawFile,"%s\n",tmpMsg);
+    if ( ftell(s_rawFile) >= DATA_FILE_SIZE) {
       create_file();
     }
   }
